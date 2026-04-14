@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using TaskFlow.src.Application.Interfaces;
+using TaskFlow.src.Application.Services;
 using TaskFlow.src.Infrastructure.Persistence;
+using TaskFlow.src.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +13,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<PasswordHasher>();
 
 var app = builder.Build();
 
