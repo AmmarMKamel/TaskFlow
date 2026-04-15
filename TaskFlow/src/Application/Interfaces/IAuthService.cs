@@ -6,5 +6,7 @@ namespace TaskFlow.src.Application.Interfaces
     {
         Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
         Task<LoginResponseDto> LoginAsync(LoginRequestDto request);
+        Task<RefreshResponseDto> RefreshTokenAsync(RefreshRequestDto request);
+        Task RevokeTokenAsync(string refreshToken);
     }
 }
