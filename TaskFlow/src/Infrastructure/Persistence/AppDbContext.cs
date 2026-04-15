@@ -12,6 +12,7 @@ namespace TaskFlow.src.Infrastructure.Persistence
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<Role> Roles => Set<Role>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +39,18 @@ namespace TaskFlow.src.Infrastructure.Persistence
                 .HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(t => t.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.AssignedToUser)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToUserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
