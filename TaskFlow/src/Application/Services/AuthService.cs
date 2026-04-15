@@ -34,6 +34,12 @@ namespace TaskFlow.src.Application.Services
                 throw new Exception("Email already exists.");
             }
 
+            var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+            if (userRole == null)
+            {
+                throw new Exception("Default role not found");
+            }
+
             var (hash, salt) = _passwordHasher.HashPassword(request.Password);
 
             var user = new User
@@ -43,7 +49,14 @@ namespace TaskFlow.src.Application.Services
                 LastName = request.LastName,
                 Email = request.Email,
                 PasswordHash = hash,
-                PasswordSalt = salt
+                PasswordSalt = salt,
+                UserRoles = new List<UserRole>
+                {
+                    new UserRole
+                    {
+                        RoleId = userRole.Id
+                    }
+                }
             };
 
             _context.Users.Add(user);
@@ -58,6 +71,8 @@ namespace TaskFlow.src.Application.Services
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
         {
             var user = await _context.Users
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
                 .Include(u => u.RefreshTokens)
                 .FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
