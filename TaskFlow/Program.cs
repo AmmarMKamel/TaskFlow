@@ -39,6 +39,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<PasswordHasher>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<RefreshTokenService>();
 
 var app = builder.Build();
 
