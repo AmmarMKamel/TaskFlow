@@ -52,5 +52,13 @@ namespace TaskFlow.src.API.Controllers
         {
             return Ok("You are authenticated");
         }
+
+        // Temporary endpoint to test role-based authorization - can be removed later
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin-only")]
+        public IActionResult AdminOnly()
+        {
+            return Ok("Admin access");
+        }
     }
 }
