@@ -18,5 +18,6 @@
         public DateTime? UpdatedAt { get; set; }
 
         public List<RefreshToken> RefreshTokens { get; set; } = new();
+        public List<UserRole> UserRoles { get; set; } = new();
     }
 }
