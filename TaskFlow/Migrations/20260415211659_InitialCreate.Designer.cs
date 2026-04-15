@@ -12,7 +12,7 @@ using TaskFlow.src.Infrastructure.Persistence;
 namespace TaskFlow.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260414222217_InitialCreate")]
+    [Migration("20260415211659_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
