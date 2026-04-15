@@ -31,6 +31,20 @@ namespace TaskFlow.src.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh(RefreshRequestDto request)
+        {
+            var result = await _authService.RefreshTokenAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPost("revoke")]
+        public async Task<IActionResult> Revoke(RefreshRequestDto request)
+        {
+            await _authService.RevokeTokenAsync(request.RefreshToken);
+            return Ok(new { message = "Token revoked" });
+        }
+
         // Temporary endpoint to test authentication - can be removed later
         [HttpGet("me")]
         [Authorize]
