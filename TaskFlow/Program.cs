@@ -8,6 +8,7 @@ using TaskFlow.src.Infrastructure.Services;
 using System.Text;
 using StackExchange.Redis;
 using TaskFlow.src.Infrastructure.Caching;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(config!);
 });
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IJobService, JobService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -56,6 +62,12 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await DbSeeder.SeedRolesAsync(db);
+
+    var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobs.AddOrUpdate<IJobService>(
+        "cleanup-refresh-tokens",
+        s => s.CleanupExpiredRefreshTokensAsync(),
+        Cron.Daily);
 }
 
 // Configure the HTTP request pipeline.
@@ -65,6 +77,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthentication();
 app.UseAuthorization();
