@@ -9,10 +9,12 @@ namespace TaskFlow.src.Application.Services
     public class TaskService : ITaskService
     {
         private readonly AppDbContext _context;
+        private readonly ICacheService _cache;
 
-        public TaskService(AppDbContext context)
+        public TaskService(AppDbContext context, ICacheService cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         public async Task<TaskResponseDto> CreateTaskAsync(Guid userId, CreateTaskDto dto)
@@ -31,6 +33,8 @@ namespace TaskFlow.src.Application.Services
             _context.Tasks.Add(task);
             await _context.SaveChangesAsync();
 
+            await _cache.RemoveAsync($"tasks:user:{userId}");
+
             return new TaskResponseDto
             {
                 Id = task.Id,
@@ -43,13 +47,21 @@ namespace TaskFlow.src.Application.Services
 
         public async Task<List<TaskResponseDto>> GetTasksAsync(Guid userId)
         {
+            var cacheKey = $"tasks:user:{userId}";
+
+            var cached = await _cache.GetAsync<List<TaskResponseDto>>(cacheKey);
+            if (cached != null)
+            {
+                return cached;
+            }
+
             var tasks = await _context.Tasks
                 .Include(t => t.CreatedByUser)
                 .Include(t => t.AssignedToUser)
                 .Where(t => t.CreatedByUserId == userId || t.AssignedToUserId == userId)
                 .ToListAsync();
 
-            return tasks.Select(t => new TaskResponseDto
+            var result = tasks.Select(t => new TaskResponseDto
             {
                 Id = t.Id,
                 Title = t.Title,
@@ -59,6 +71,10 @@ namespace TaskFlow.src.Application.Services
                 CreatedBy = t.CreatedByUser.Email,
                 AssignedTo = t.AssignedToUser != null ? t.AssignedToUser.Email : null
             }).ToList();
+
+            await _cache.SetAsync(cacheKey, result, TimeSpan.FromMinutes(5));
+
+            return result;
         }
 
         public async Task<TaskResponseDto> UpdateTaskAsync(Guid taskId, UpdateTaskDto dto)
@@ -77,6 +93,12 @@ namespace TaskFlow.src.Application.Services
             if (dto.AssignedToUserId.HasValue) task.AssignedToUserId = dto.AssignedToUserId.Value;
 
             await _context.SaveChangesAsync();
+
+            await _cache.RemoveAsync($"tasks:user:{task.CreatedByUserId}");
+            if (task.AssignedToUserId.HasValue)
+            {
+                await _cache.RemoveAsync($"tasks:user:{task.AssignedToUserId.Value}");
+            }
 
             return new TaskResponseDto
             {
