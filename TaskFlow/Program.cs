@@ -6,12 +6,20 @@ using TaskFlow.src.Application.Services;
 using TaskFlow.src.Infrastructure.Persistence;
 using TaskFlow.src.Infrastructure.Services;
 using System.Text;
+using StackExchange.Redis;
+using TaskFlow.src.Infrastructure.Caching;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var config = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(config!);
+});
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
